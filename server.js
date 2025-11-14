@@ -1,23 +1,29 @@
 import express from "express";
 import cors from "cors";
-import { PeerServer } from "peer";
+import { ExpressPeerServer } from "peer";
+import { createServer } from "http";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-
 app.use(cors());
 
+// Serve static files
+app.use(express.static(path.join(__dirname, "public")));
+
 // PeerJS server
-const peerServer = PeerServer({
-  port: process.env.PORT || 9000,
-  path: "/peerjs"
+const httpServer = createServer(app);
+const peerServer = ExpressPeerServer(httpServer, {
+  debug: true,
+  path: "/myapp"
 });
+app.use("/peerjs", peerServer);
 
-app.use("/peerjs", (req, res) => {
-  res.send("PeerJS server is running!");
+// Start server
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
-
-// Render uses one port → cần listen app
-app.listen(process.env.PORT || 9000, () => {
-  console.log("Server running...");
-});
-
